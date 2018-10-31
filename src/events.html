@@ -1,0 +1,33 @@
+<div id="events">
+	<div style="text-align: center">
+		<button class="btn btn-primary" on:click="fire('addEvent')">
+			Add event
+		</button>
+	</div>
+	<div id="event-list">
+		{#each events as event}
+			<Event {event} on:deleteEvent on:updateEvent />
+		{/each}
+	</div>
+</div>
+
+<style>
+	#events {
+		position: fixed;
+		width: 16rem;
+		padding-right: 1rem;
+		border-right: 2px solid #eee;
+		height: calc(100% - 2rem);
+		overflow-y: auto;
+		font-size: 90%;
+		padding: 1ex;
+	}
+</style>
+
+<script>
+	export default {
+		components: {
+			Event: './event.html'
+		}
+	}
+</script>

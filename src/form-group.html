@@ -1,0 +1,53 @@
+<div class="form-group">
+	<label>{label}</label>
+	<input type={c_type} {value} on:input="changed(event)"
+		class="form-control" />
+	&nbsp;{c_after}
+</div>
+
+<style>
+	.form-control {
+		display: inline-block;
+		height: 2rem;
+		font-size: 100%;
+	}
+
+	.form-control[type=text], .form-control[type=date] {
+		width: 10rem;
+	}
+
+	.form-control[type=color] {
+		width: 3em;
+		padding: 0.25ex 0.5ex;
+	}
+
+	.form-control[type=number] {
+		width: 4.5em;
+	}
+
+	.form-group {
+		margin-bottom: 1ex;
+	}
+
+	label {
+		display: inline-block;
+		width: 4em;
+		text-align: right;
+		margin-right: 1ex;
+		font-weight: bold;
+	}
+</style>
+
+<script>
+	export default {
+		computed: {
+			c_type: (props) => props.type || 'text',
+			c_after: (props) => props.after || ''
+		},
+		methods: {
+			changed(evt) {
+				this.set({ value: evt.target.value })
+			}
+		}
+	}
+</script>

@@ -1,0 +1,56 @@
+<div>
+	<hr/>
+	<FormGroup label="Name" name="name"
+		bind:value="event.name"
+		attrs={{ autoFocus:true }} />
+	<FormGroup label="Color" type="color" name="color"
+		bind:value="event.color" />
+	<FormGroup label="Start" type="date" name="start"
+		bind:value="event.start" />
+	<FormGroup label="Duration" type="number" name="duration"
+		after="day(s)" attrs={{ min: 1, step: 1 }}
+		bind:value="event.duration" />
+	<FormGroup label="Every" type="number" name="every"
+		after="day(s)" attrs={{ min: 1, step: 1 }}
+		bind:value="event.every" />
+	<FormGroup label="Repeat" type="number" name="repeat"
+		after="time(s)" attrs={{ min: 1, step: 1 }}
+		bind:value="event.repeat" />
+	<div class="form-group">
+		<button
+			on:click="fireDeleteEvent()"
+			class="btn btn-sm btn-warning">
+			Remove event
+		</button>
+	</div>
+</div>
+
+<style>
+	button {
+		margin-top: 0.5em;
+		margin-left: 5em;
+		text-align: center;
+	}
+</style>
+
+<script>
+	export default {
+		components: {
+			FormGroup: './form-group.html'
+		},
+		methods: {
+			fireDeleteEvent() {
+				let { event } = this.get()
+				this.fire('deleteEvent', event)
+			},
+			fireUpdateEvent() {
+				let { event } = this.get()
+				this.fire('updateEvent', event)
+			}
+		},
+		onupdate({ current, previous }) {
+			if (previous)
+				this.fireUpdateEvent()
+		}
+	}
+</script>

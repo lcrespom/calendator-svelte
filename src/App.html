@@ -1,0 +1,53 @@
+<div id="main">
+    <Events {events}
+        on:addEvent="addEvent()"
+        on:updateEvent="updateEvent(event)"
+        on:deleteEvent="deleteEvent(event)"
+    />
+    <Calendar />
+</div>
+
+<style>
+    #main {
+    	position: relative;
+    }
+</style>
+
+<script>
+    import { randomColor, date2html } from './utils.js'
+
+    export default {
+        components: {
+            Events: './events.html',
+            Calendar: './calendar.html'
+        },
+        data() {
+            return {
+                events: []
+            }
+        },
+        methods: {
+            addEvent() {
+                let { events } = this.get()
+                let newEvent = {
+                    name: '',
+                    color: randomColor(),
+                    start: date2html(new Date()),
+                    duration: 1,
+                    every: 1,
+                    repeat: 1
+                }
+                events = [newEvent, ...events]
+                this.set({ events })
+            },
+            updateEvent(event) {
+
+            },
+            deleteEvent(event) {
+                let { events } = this.get()
+                let newEvents = events.filter(e => e != event)
+                this.set({ events: newEvents })
+            }
+        }
+    }
+</script>
