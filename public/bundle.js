@@ -373,6 +373,21 @@ var app = (function () {
 		return rgb2hex(r, g, b)
 	}
 
+	function parseHexColor(hexcol) {
+		let rgb = parseInt(hexcol.substr(1), 16);
+		return [rgb & 255, (rgb >> 8) & 255, (rgb >> 16) & 255]
+	}
+
+	function isDarkColor(r, g, b) {
+		let luminance = (r * 0.299 + g * 0.587 + b * 0.114) / 256;
+		return luminance < 0.6
+	}
+
+	function getContrastingColor(color) {
+		let [r, g, b] = parseHexColor(color);
+		return isDarkColor(r, g, b) ? '#ffffff' : '#000000'
+	}
+
 
 	//-------------------- Date utilities --------------------
 
@@ -1126,7 +1141,22 @@ var app = (function () {
 			weekdays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 		}
 	}
+	function getEvents(daynum, year, month, eventMap) {
+		let dayId = date2html(new Date(year, month, daynum));
+		let events = eventMap[dayId];
+		if (!events) events = [];
+		return events
+	}
+	function eventStyle(event) {
+		return `background-color: ${event.color}; color: ${event.txtcolor}`
+	}
 	const file$3 = "src/month.html";
+
+	function get_each_context$1(ctx, list, i) {
+		const child_ctx = Object.create(ctx);
+		child_ctx.event = list[i];
+		return child_ctx;
+	}
 
 	function get_each1_context(ctx, list, i) {
 		const child_ctx = Object.create(ctx);
@@ -1148,7 +1178,7 @@ var app = (function () {
 		var each0_blocks = [];
 
 		for (var i = 0; i < each0_value.length; i += 1) {
-			each0_blocks[i] = create_each_block_1(component, get_each0_context(ctx, each0_value, i));
+			each0_blocks[i] = create_each_block_2(component, get_each0_context(ctx, each0_value, i));
 		}
 
 		var each1_value = ctx.days;
@@ -1217,7 +1247,7 @@ var app = (function () {
 						if (each0_blocks[i]) {
 							each0_blocks[i].p(changed, child_ctx);
 						} else {
-							each0_blocks[i] = create_each_block_1(component, child_ctx);
+							each0_blocks[i] = create_each_block_2(component, child_ctx);
 							each0_blocks[i].c();
 							each0_blocks[i].m(div0, text2);
 						}
@@ -1229,7 +1259,7 @@ var app = (function () {
 					each0_blocks.length = each0_value.length;
 				}
 
-				if (changed.days) {
+				if (changed.days || changed.year || changed.month || changed.eventMap) {
 					each1_value = ctx.days;
 
 					for (var i = 0; i < each1_value.length; i += 1) {
@@ -1272,7 +1302,7 @@ var app = (function () {
 	}
 
 	// (4:2) {#each weekdays as weekday}
-	function create_each_block_1(component, ctx) {
+	function create_each_block_2(component, ctx) {
 		var span, text_value = ctx.weekday, text;
 
 		return {
@@ -1304,14 +1334,87 @@ var app = (function () {
 
 	// (9:4) {#if !day.isEmpty}
 	function create_if_block(component, ctx) {
-		var div, text_value = ctx.day.daynum, text;
+		var div, text0_value = ctx.day.daynum, text0, text1;
+
+		var each_value = getEvents(ctx.day.daynum, ctx.year, ctx.month, ctx.eventMap);
+
+		var each_blocks = [];
+
+		for (var i = 0; i < each_value.length; i += 1) {
+			each_blocks[i] = create_each_block_1(component, get_each_context$1(ctx, each_value, i));
+		}
+
+		return {
+			c: function create() {
+				div = createElement("div");
+				text0 = createText(text0_value);
+				text1 = createText("\n\t\t\t\t\t\t");
+
+				for (var i = 0; i < each_blocks.length; i += 1) {
+					each_blocks[i].c();
+				}
+				div.className = "cal-cell svelte-1u408in";
+				addLoc(div, file$3, 9, 5, 266);
+			},
+
+			m: function mount(target, anchor) {
+				insert(target, div, anchor);
+				append(div, text0);
+				append(div, text1);
+
+				for (var i = 0; i < each_blocks.length; i += 1) {
+					each_blocks[i].m(div, null);
+				}
+			},
+
+			p: function update(changed, ctx) {
+				if ((changed.days) && text0_value !== (text0_value = ctx.day.daynum)) {
+					setData(text0, text0_value);
+				}
+
+				if (changed.days || changed.year || changed.month || changed.eventMap) {
+					each_value = getEvents(ctx.day.daynum, ctx.year, ctx.month, ctx.eventMap);
+
+					for (var i = 0; i < each_value.length; i += 1) {
+						const child_ctx = get_each_context$1(ctx, each_value, i);
+
+						if (each_blocks[i]) {
+							each_blocks[i].p(changed, child_ctx);
+						} else {
+							each_blocks[i] = create_each_block_1(component, child_ctx);
+							each_blocks[i].c();
+							each_blocks[i].m(div, null);
+						}
+					}
+
+					for (; i < each_blocks.length; i += 1) {
+						each_blocks[i].d(1);
+					}
+					each_blocks.length = each_value.length;
+				}
+			},
+
+			d: function destroy$$1(detach) {
+				if (detach) {
+					detachNode(div);
+				}
+
+				destroyEach(each_blocks, detach);
+			}
+		};
+	}
+
+	// (12:6) {#each getEvents(day.daynum, year, month, eventMap) as event}
+	function create_each_block_1(component, ctx) {
+		var div, text_value = ctx.event.name, text, div_style_value;
 
 		return {
 			c: function create() {
 				div = createElement("div");
 				text = createText(text_value);
-				div.className = "cal-cell svelte-1u408in";
-				addLoc(div, file$3, 9, 5, 266);
+				div.className = "cal-event svelte-1u408in";
+				div.style.cssText = div_style_value = eventStyle(ctx.event);
+				addLoc(div, file$3, 12, 7, 383);
 			},
 
 			m: function mount(target, anchor) {
@@ -1320,8 +1423,12 @@ var app = (function () {
 			},
 
 			p: function update(changed, ctx) {
-				if ((changed.days) && text_value !== (text_value = ctx.day.daynum)) {
+				if ((changed.days || changed.year || changed.month || changed.eventMap) && text_value !== (text_value = ctx.event.name)) {
 					setData(text, text_value);
+				}
+
+				if ((changed.days || changed.year || changed.month || changed.eventMap) && div_style_value !== (div_style_value = eventStyle(ctx.event))) {
+					div.style.cssText = div_style_value;
 				}
 			},
 
@@ -1397,6 +1504,8 @@ var app = (function () {
 		if (!('year' in this._state)) console.warn("<Month> was created without expected data property 'year'");
 		if (!('name' in this._state)) console.warn("<Month> was created without expected data property 'name'");
 		if (!('weekdays' in this._state)) console.warn("<Month> was created without expected data property 'weekdays'");
+
+		if (!('eventMap' in this._state)) console.warn("<Month> was created without expected data property 'eventMap'");
 		this._intro = !!options.intro;
 
 		this._fragment = create_main_fragment$3(this, this._state);
@@ -1445,6 +1554,28 @@ var app = (function () {
 		return months
 	}
 
+	function initEventMap(events) {
+		let eventMap = {};
+		for (let event of events) {
+			let startDate = new Date(event.start);
+			for (let i = 0; i < event.repeat; i++) {
+				let d = new Date(startDate.getTime());
+				for (let j = 0; j < event.duration; j++) {
+					let dayId = date2html(d);
+					if (eventMap[dayId] === undefined) eventMap[dayId] = [];
+					eventMap[dayId].push(event);
+					d.setDate(d.getDate() + 1);
+				}
+				startDate.setDate(startDate.getDate() + event.every);
+			}
+		}
+		return eventMap
+	}
+
+	function eventMap({ events }) {
+		return initEventMap(events);
+	}
+
 	function data$1() {
 		return {
 			months: initMonths()
@@ -1452,7 +1583,7 @@ var app = (function () {
 	}
 	const file$4 = "src/calendar.html";
 
-	function get_each_context$1(ctx, list, i) {
+	function get_each_context$2(ctx, list, i) {
 		const child_ctx = Object.create(ctx);
 		child_ctx.month = list[i];
 		return child_ctx;
@@ -1466,7 +1597,7 @@ var app = (function () {
 		var each_blocks = [];
 
 		for (var i = 0; i < each_value.length; i += 1) {
-			each_blocks[i] = create_each_block$2(component, get_each_context$1(ctx, each_value, i));
+			each_blocks[i] = create_each_block$2(component, get_each_context$2(ctx, each_value, i));
 		}
 
 		function outroBlock(i, detach, fn) {
@@ -1504,11 +1635,11 @@ var app = (function () {
 			},
 
 			p: function update(changed, ctx) {
-				if (changed.months) {
+				if (changed.months || changed.eventMap) {
 					each_value = ctx.months;
 
 					for (var i = 0; i < each_value.length; i += 1) {
-						const child_ctx = get_each_context$1(ctx, each_value, i);
+						const child_ctx = get_each_context$2(ctx, each_value, i);
 
 						if (each_blocks[i]) {
 							each_blocks[i].p(changed, child_ctx);
@@ -1555,7 +1686,8 @@ var app = (function () {
 		var month_initial_data = {
 		 	name: ctx.month.name,
 		 	month: ctx.month.mnum,
-		 	year: ctx.month.year
+		 	year: ctx.month.year,
+		 	eventMap: ctx.eventMap
 		 };
 		var month = new Month({
 			root: component.root,
@@ -1578,6 +1710,7 @@ var app = (function () {
 				if (changed.months) month_changes.name = ctx.month.name;
 				if (changed.months) month_changes.month = ctx.month.mnum;
 				if (changed.months) month_changes.year = ctx.month.year;
+				if (changed.eventMap) month_changes.eventMap = ctx.eventMap;
 				month._set(month_changes);
 			},
 
@@ -1608,6 +1741,9 @@ var app = (function () {
 
 		init(this, options);
 		this._state = assign(data$1(), options.data);
+
+		this._recompute({ events: 1 }, this._state);
+		if (!('events' in this._state)) console.warn("<Calendar> was created without expected data property 'events'");
 		if (!('months' in this._state)) console.warn("<Calendar> was created without expected data property 'months'");
 		this._intro = !!options.intro;
 
@@ -1627,6 +1763,13 @@ var app = (function () {
 	assign(Calendar.prototype, protoDev);
 
 	Calendar.prototype._checkReadOnly = function _checkReadOnly(newState) {
+		if ('eventMap' in newState && !this._updatingReadonlyProperty) throw new Error("<Calendar>: Cannot set read-only property 'eventMap'");
+	};
+
+	Calendar.prototype._recompute = function _recompute(changed, state) {
+		if (changed.events) {
+			if (this._differs(state.eventMap, (state.eventMap = eventMap(state)))) changed.eventMap = true;
+		}
 	};
 
 	/* src/App.html generated by Svelte v2.15.1 */
@@ -1653,6 +1796,7 @@ var app = (function () {
 	    },
 	    updateEvent(event) {
 	        let { events } = this.get();
+	        event.txtcolor = getContrastingColor(event.color);
 	        this.set({ events });
 	    },
 	    deleteEvent(event) {

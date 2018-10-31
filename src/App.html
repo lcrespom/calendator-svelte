@@ -14,7 +14,7 @@
 </style>
 
 <script>
-    import { randomColor, date2html } from './utils.js'
+    import { randomColor, getContrastingColor, date2html } from './utils.js'
 
     export default {
         components: {
@@ -43,6 +43,7 @@
             },
             updateEvent(event) {
                 let { events } = this.get()
+                event.txtcolor = getContrastingColor(event.color)
                 this.set({ events })
             },
             deleteEvent(event) {

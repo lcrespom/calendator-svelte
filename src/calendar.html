@@ -4,6 +4,7 @@
 			name={month.name}
 			month={month.mnum}
 			year={month.year}
+			{eventMap}
 		/>
 	{/each}
 </div>
@@ -17,6 +18,8 @@
 </style>
 
 <script>
+	import { date2html } from './utils'
+
 	let MONTHS = [
 		'January', 'February', 'March', 'April',
 		'May', 'June', 'July', 'August',
@@ -38,6 +41,24 @@
 		return months
 	}
 
+	function initEventMap(events) {
+		let eventMap = {}
+		for (let event of events) {
+			let startDate = new Date(event.start)
+			for (let i = 0; i < event.repeat; i++) {
+				let d = new Date(startDate.getTime())
+				for (let j = 0; j < event.duration; j++) {
+					let dayId = date2html(d)
+					if (eventMap[dayId] === undefined) eventMap[dayId] = []
+					eventMap[dayId].push(event)
+					d.setDate(d.getDate() + 1)
+				}
+				startDate.setDate(startDate.getDate() + event.every)
+			}
+		}
+		return eventMap
+	}
+
 	export default {
 		components: {
 			Month: './month.html'
@@ -46,6 +67,9 @@
 			return {
 				months: initMonths()
 			}
+		},
+		computed: {
+			eventMap: ({ events }) => initEventMap(events)
 		}
 	}
 </script>

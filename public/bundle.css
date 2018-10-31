@@ -2,8 +2,8 @@
 #events.svelte-nq3at1{position:fixed;width:16rem;padding-right:1rem;border-right:2px solid #eee;height:calc(100% - 2rem);overflow-y:auto;font-size:90%;padding:1ex}
 #calendar.svelte-bnngkq{position:absolute;left:17rem;width:calc(100% - 18rem)}
 button.svelte-hj9mtw{margin-top:0.5em;margin-left:5em;text-align:center}
-.form-control.svelte-m01gom{display:inline-block;height:2rem;font-size:100%}.form-control[type=text].svelte-m01gom,.form-control[type=date].svelte-m01gom{width:10rem}.form-control[type=color].svelte-m01gom{width:3em;padding:0.25ex 0.5ex}.form-control[type=number].svelte-m01gom{width:4.5em}.form-group.svelte-m01gom{margin-bottom:1ex}label.svelte-m01gom{display:inline-block;width:4em;text-align:right;margin-right:1ex;font-weight:bold}
 .cal-month-block.svelte-1u408in{margin-bottom:1rem}.cal-month.svelte-1u408in{display:grid;grid-template-columns:repeat(7, 1fr);grid-gap:1ex;margin:0 auto;padding:0}.cal-weekday.svelte-1u408in{text-align:center
 }.cal-day.svelte-1u408in{text-align:center;padding:50% 0;background:#F0F0F0;position:relative}.cal-empty.svelte-1u408in{background:white}.cal-cell.svelte-1u408in{position:absolute;top:1ex;left:0;bottom:0;right:0}.cal-event.svelte-1u408in{border-radius:5px;margin:0 0.25rem 4px;overflow:hidden;font-size:75%}
+.form-control.svelte-m01gom{display:inline-block;height:2rem;font-size:100%}.form-control[type=text].svelte-m01gom,.form-control[type=date].svelte-m01gom{width:10rem}.form-control[type=color].svelte-m01gom{width:3em;padding:0.25ex 0.5ex}.form-control[type=number].svelte-m01gom{width:4.5em}.form-group.svelte-m01gom{margin-bottom:1ex}label.svelte-m01gom{display:inline-block;width:4em;text-align:right;margin-right:1ex;font-weight:bold}
 
 /*# sourceMappingURL=bundle.css.map */

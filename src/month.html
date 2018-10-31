@@ -9,7 +9,12 @@
 				{#if !day.isEmpty}
 					<div class="cal-cell">
 						{day.daynum}
-						<!-- {renderEvents(daynum, mnum, year, eventMap)} -->
+						{#each getEvents(day.daynum, year, month, eventMap) as event}
+							<div class="cal-event"
+								style={eventStyle(event)}>
+								{event.name}
+							</div>
+						{/each}
 					</div>
 				{/if}
 			</div>
@@ -62,7 +67,7 @@
 </style>
 
 <script>
-	import { getMonthWeeks, dayOfWeek, daysInMonth } from './utils'
+	import { getMonthWeeks, dayOfWeek, daysInMonth, date2html } from './utils'
 
 	function initDays(mnum, year) {
 		let days = []
@@ -85,6 +90,17 @@
 		},
 		computed: {
 			days: ({ month, year }) => initDays(month, year)
+		},
+		helpers: {
+			getEvents(daynum, year, month, eventMap) {
+				let dayId = date2html(new Date(year, month, daynum))
+				let events = eventMap[dayId]
+				if (!events) events = []
+				return events
+			},
+			eventStyle(event) {
+				return `background-color: ${event.color}; color: ${event.txtcolor}`
+			}
 		}
 	}
 </script>
