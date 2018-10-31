@@ -1,6 +1,10 @@
 <div id="calendar">
-	{#each events as event}
-		<p>ToDo: {event.name} on {event.start}</p>
+	{#each months as month}
+		<Month
+			name={month.name}
+			month={month.mnum}
+			year={month.year}
+		/>
 	{/each}
 </div>
 
@@ -11,3 +15,37 @@
 		width: calc(100% - 18rem);
 	}
 </style>
+
+<script>
+	let MONTHS = [
+		'January', 'February', 'March', 'April',
+		'May', 'June', 'July', 'August',
+		'September', 'October', 'November', 'December'
+	]
+
+	function initMonths() {
+		let months = []
+		let today = new Date()
+		let month = today.getMonth()
+		let year = today.getFullYear()
+		for (let i = 0; i < 12; i++) {
+			let j = month + i
+			if (j === 12) year++
+			let mnum = j % 12
+			let name = `${MONTHS[mnum]} ${year}`
+			months.push({ name, mnum, year })
+		}
+		return months
+	}
+
+	export default {
+		components: {
+			Month: './month.html'
+		},
+		data() {
+			return {
+				months: initMonths()
+			}
+		}
+	}
+</script>

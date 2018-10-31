@@ -1,0 +1,90 @@
+<div class="cal-month-block">
+	<h2>{name}</h2>
+	<div class="cal-month">
+		{#each weekdays as weekday}
+			<span class="cal-weekday">{weekday}</span>
+		{/each}
+		{#each days as day}
+			<div class="cal-day {day.isEmpty ? 'cal-empty' : ''}">
+				{#if !day.isEmpty}
+					<div class="cal-cell">
+						{day.daynum}
+						<!-- {renderEvents(daynum, mnum, year, eventMap)} -->
+					</div>
+				{/if}
+			</div>
+		{/each}
+	</div>
+</div>
+
+<style>
+.cal-month-block {
+	margin-bottom: 1rem;
+}
+
+.cal-month {
+	display: grid;
+	grid-template-columns: repeat(7, 1fr);
+	grid-gap: 1ex;
+	margin: 0 auto;
+	padding: 0;
+}
+
+.cal-weekday {
+	text-align: center
+}
+
+.cal-day {
+	text-align: center;
+	padding: 50% 0;
+	background: #F0F0F0;
+	position: relative;
+}
+
+.cal-empty {
+	background: white;
+}
+
+.cal-cell {
+	position: absolute;
+    top: 1ex;
+    left: 0;
+    bottom: 0;
+    right: 0;
+}
+
+.cal-event {
+	border-radius: 5px;
+	margin: 0 0.25rem 4px;
+	overflow: hidden;
+	font-size: 75%;
+}
+</style>
+
+<script>
+	import { getMonthWeeks, dayOfWeek, daysInMonth } from './utils'
+
+	function initDays(mnum, year) {
+		let days = []
+		let totalDays = getMonthWeeks(mnum, year) * 7
+		let daynum = 1 - dayOfWeek(new Date(year, mnum, 1))
+		let dim = daysInMonth(mnum, year)
+		for (let i = 1; i <= totalDays; i++) {
+			let isEmpty = daynum <= 0 || daynum > dim
+			days.push({ daynum, dim, mnum, year, isEmpty })
+			daynum++
+		}
+		return days
+	}
+
+	export default {
+		data() {
+			return {
+				weekdays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+			}
+		},
+		computed: {
+			days: ({ month, year }) => initDays(month, year)
+		}
+	}
+</script>
