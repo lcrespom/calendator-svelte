@@ -1,6 +1,6 @@
 <div class="form-group">
 	<label>{label}</label>
-	<input type={c_type} {value} on:input="changed(event)"
+	<input ref:input type={c_type} {value} on:input="changed(event)"
 		class="form-control" />
 	&nbsp;{c_after}
 </div>
@@ -48,6 +48,14 @@
 			changed(evt) {
 				this.set({ value: evt.target.value })
 			}
+		},
+		oncreate() {
+			let { attrs, focus } = this.get()
+			if (focus)
+				this.refs.input.focus()
+			if (attrs)
+				for (let aname in attrs)
+					this.refs.input.setAttribute(aname, attrs[aname])
 		}
 	}
 </script>

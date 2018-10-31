@@ -4,7 +4,7 @@
         on:updateEvent="updateEvent(event)"
         on:deleteEvent="deleteEvent(event)"
     />
-    <Calendar />
+    <Calendar {events} />
 </div>
 
 <style>
@@ -30,6 +30,7 @@
             addEvent() {
                 let { events } = this.get()
                 let newEvent = {
+                    id: Date.now(),
                     name: '',
                     color: randomColor(),
                     start: date2html(new Date()),
@@ -41,7 +42,8 @@
                 this.set({ events })
             },
             updateEvent(event) {
-
+                let { events } = this.get()
+                this.set({ events })
             },
             deleteEvent(event) {
                 let { events } = this.get()

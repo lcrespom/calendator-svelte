@@ -62,6 +62,10 @@ var app = (function () {
 		return document.createTextNode(data);
 	}
 
+	function createComment() {
+		return document.createComment('');
+	}
+
 	function addListener(node, event, handler, options) {
 		node.addEventListener(event, handler, options);
 	}
@@ -81,6 +85,103 @@ var app = (function () {
 
 	function setStyle(node, key, value) {
 		node.style.setProperty(key, value);
+	}
+
+	function destroyBlock(block, lookup) {
+		block.d(1);
+		lookup[block.key] = null;
+	}
+
+	function outroAndDestroyBlock(block, lookup) {
+		block.o(function() {
+			destroyBlock(block, lookup);
+		});
+	}
+
+	function updateKeyedEach(old_blocks, component, changed, get_key, dynamic, ctx, list, lookup, node, destroy, create_each_block, intro_method, next, get_context) {
+		var o = old_blocks.length;
+		var n = list.length;
+
+		var i = o;
+		var old_indexes = {};
+		while (i--) old_indexes[old_blocks[i].key] = i;
+
+		var new_blocks = [];
+		var new_lookup = {};
+		var deltas = {};
+
+		var i = n;
+		while (i--) {
+			var child_ctx = get_context(ctx, list, i);
+			var key = get_key(child_ctx);
+			var block = lookup[key];
+
+			if (!block) {
+				block = create_each_block(component, key, child_ctx);
+				block.c();
+			} else if (dynamic) {
+				block.p(changed, child_ctx);
+			}
+
+			new_blocks[i] = new_lookup[key] = block;
+
+			if (key in old_indexes) deltas[key] = Math.abs(i - old_indexes[key]);
+		}
+
+		var will_move = {};
+		var did_move = {};
+
+		function insert(block) {
+			block[intro_method](node, next);
+			lookup[block.key] = block;
+			next = block.first;
+			n--;
+		}
+
+		while (o && n) {
+			var new_block = new_blocks[n - 1];
+			var old_block = old_blocks[o - 1];
+			var new_key = new_block.key;
+			var old_key = old_block.key;
+
+			if (new_block === old_block) {
+				// do nothing
+				next = new_block.first;
+				o--;
+				n--;
+			}
+
+			else if (!new_lookup[old_key]) {
+				// remove old block
+				destroy(old_block, lookup);
+				o--;
+			}
+
+			else if (!lookup[new_key] || will_move[new_key]) {
+				insert(new_block);
+			}
+
+			else if (did_move[old_key]) {
+				o--;
+
+			} else if (deltas[new_key] > deltas[old_key]) {
+				did_move[new_key] = true;
+				insert(new_block);
+
+			} else {
+				will_move[old_key] = true;
+				o--;
+			}
+		}
+
+		while (o--) {
+			var old_block = old_blocks[o];
+			if (!new_lookup[old_block.key]) destroy(old_block, lookup);
+		}
+
+		while (n) insert(new_blocks[n - 1]);
+
+		return new_blocks;
 	}
 
 	function blankObject() {
@@ -298,6 +399,14 @@ var app = (function () {
 		}
 	};
 
+	function oncreate() {
+		let { attrs, focus } = this.get();
+		if (focus)
+			this.refs.input.focus();
+		if (attrs)
+			for (let aname in attrs)
+				this.refs.input.setAttribute(aname, attrs[aname]);
+	}
 	const file = "src/form-group.html";
 
 	function create_main_fragment(component, ctx) {
@@ -333,6 +442,7 @@ var app = (function () {
 				append(label, text0);
 				append(div, text1);
 				append(div, input);
+				component.refs.input = input;
 				append(div, text2);
 				append(div, text3);
 				current = true;
@@ -370,6 +480,7 @@ var app = (function () {
 				}
 
 				removeListener(input, "input", input_handler);
+				if (component.refs.input === input) component.refs.input = null;
 			}
 		};
 	}
@@ -381,6 +492,7 @@ var app = (function () {
 		}
 
 		init(this, options);
+		this.refs = {};
 		this._state = assign({}, options.data);
 
 		this._recompute({  }, this._state);
@@ -391,10 +503,17 @@ var app = (function () {
 
 		this._fragment = create_main_fragment(this, this._state);
 
+		this.root._oncreate.push(() => {
+			oncreate.call(this);
+			this.fire("update", { changed: assignTrue({}, this._state), current: this._state });
+		});
+
 		if (options.target) {
 			if (options.hydrate) throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
 			this._fragment.c();
 			this._mount(options.target, options.anchor);
+
+			flush(this);
 		}
 
 		this._intro = true;
@@ -435,11 +554,7 @@ var app = (function () {
 	function create_main_fragment$1(component, ctx) {
 		var div1, hr, text0, formgroup0_updating = {}, text1, formgroup1_updating = {}, text2, formgroup2_updating = {}, text3, formgroup3_updating = {}, text4, formgroup4_updating = {}, text5, formgroup5_updating = {}, text6, div0, button, current;
 
-		var formgroup0_initial_data = {
-		 	label: "Name",
-		 	name: "name",
-		 	attrs: { autoFocus:true }
-		 };
+		var formgroup0_initial_data = { label: "Name", name: "name", focus: true };
 		if (ctx.event.name !== void 0) {
 			formgroup0_initial_data.value = ctx.event.name;
 			formgroup0_updating.value = true;
@@ -636,9 +751,9 @@ var app = (function () {
 				addLoc(hr, file$1, 1, 1, 7);
 				addListener(button, "click", click_handler);
 				button.className = "btn btn-sm btn-warning svelte-hj9mtw";
-				addLoc(button, file$1, 19, 2, 696);
+				addLoc(button, file$1, 18, 2, 673);
 				div0.className = "form-group";
-				addLoc(div0, file$1, 18, 1, 669);
+				addLoc(div0, file$1, 17, 1, 646);
 				addLoc(div1, file$1, 0, 0, 0);
 			},
 
@@ -796,7 +911,7 @@ var app = (function () {
 	}
 
 	function create_main_fragment$2(component, ctx) {
-		var div2, div0, button, text_1, div1, current;
+		var div2, div0, button, text_1, div1, each_blocks_1 = [], each_lookup = blankObject(), current;
 
 		function click_handler(event) {
 			component.fire('addEvent');
@@ -804,22 +919,12 @@ var app = (function () {
 
 		var each_value = ctx.events;
 
-		var each_blocks = [];
+		const get_key = ctx => ctx.event.id;
 
 		for (var i = 0; i < each_value.length; i += 1) {
-			each_blocks[i] = create_each_block(component, get_each_context(ctx, each_value, i));
-		}
-
-		function outroBlock(i, detach, fn) {
-			if (each_blocks[i]) {
-				each_blocks[i].o(() => {
-					if (detach) {
-						each_blocks[i].d(detach);
-						each_blocks[i] = null;
-					}
-					if (fn) fn();
-				});
-			}
+			let child_ctx = get_each_context(ctx, each_value, i);
+			let key = get_key(child_ctx);
+			each_blocks_1[i] = each_lookup[key] = create_each_block(component, key, child_ctx);
 		}
 
 		return {
@@ -831,9 +936,7 @@ var app = (function () {
 				text_1 = createText("\n\t");
 				div1 = createElement("div");
 
-				for (var i = 0; i < each_blocks.length; i += 1) {
-					each_blocks[i].c();
-				}
+				for (i = 0; i < each_blocks_1.length; i += 1) each_blocks_1[i].c();
 				addListener(button, "click", click_handler);
 				button.className = "btn btn-primary";
 				addLoc(button, file$2, 2, 2, 54);
@@ -853,30 +956,14 @@ var app = (function () {
 				append(div2, text_1);
 				append(div2, div1);
 
-				for (var i = 0; i < each_blocks.length; i += 1) {
-					each_blocks[i].i(div1, null);
-				}
+				for (i = 0; i < each_blocks_1.length; i += 1) each_blocks_1[i].i(div1, null);
 
 				current = true;
 			},
 
 			p: function update(changed, ctx) {
-				if (changed.events) {
-					each_value = ctx.events;
-
-					for (var i = 0; i < each_value.length; i += 1) {
-						const child_ctx = get_each_context(ctx, each_value, i);
-
-						if (each_blocks[i]) {
-							each_blocks[i].p(changed, child_ctx);
-						} else {
-							each_blocks[i] = create_each_block(component, child_ctx);
-							each_blocks[i].c();
-						}
-						each_blocks[i].i(div1, null);
-					}
-					for (; i < each_blocks.length; i += 1) outroBlock(i, 1);
-				}
+				const each_value = ctx.events;
+				each_blocks_1 = updateKeyedEach(each_blocks_1, component, changed, get_key, 1, ctx, each_value, each_lookup, div1, outroAndDestroyBlock, create_each_block, "i", null, get_each_context);
 			},
 
 			i: function intro(target, anchor) {
@@ -888,9 +975,8 @@ var app = (function () {
 			o: function outro(outrocallback) {
 				if (!current) return;
 
-				each_blocks = each_blocks.filter(Boolean);
-				const countdown = callAfter(outrocallback, each_blocks.length);
-				for (let i = 0; i < each_blocks.length; i += 1) outroBlock(i, 0, countdown);
+				const countdown = callAfter(outrocallback, each_blocks_1.length);
+				for (i = 0; i < each_blocks_1.length; i += 1) each_blocks_1[i].o(countdown);
 
 				current = false;
 			},
@@ -902,14 +988,14 @@ var app = (function () {
 
 				removeListener(button, "click", click_handler);
 
-				destroyEach(each_blocks, detach);
+				for (i = 0; i < each_blocks_1.length; i += 1) each_blocks_1[i].d();
 			}
 		};
 	}
 
-	// (8:2) {#each events as event}
-	function create_each_block(component, ctx) {
-		var current;
+	// (8:2) {#each events as event (event.id)}
+	function create_each_block(component, key_1, ctx) {
+		var first, current;
 
 		var event_initial_data = { event: ctx.event };
 		var event = new Event({
@@ -926,11 +1012,18 @@ var app = (function () {
 		});
 
 		return {
+			key: key_1,
+
+			first: null,
+
 			c: function create() {
+				first = createComment();
 				event._fragment.c();
+				this.first = first;
 			},
 
 			m: function mount(target, anchor) {
+				insert(target, first, anchor);
 				event._mount(target, anchor);
 				current = true;
 			},
@@ -955,6 +1048,10 @@ var app = (function () {
 			},
 
 			d: function destroy$$1(detach) {
+				if (detach) {
+					detachNode(first);
+				}
+
 				event.destroy(detach);
 			}
 		};
@@ -993,22 +1090,67 @@ var app = (function () {
 
 	const file$3 = "src/calendar.html";
 
+	function get_each_context$1(ctx, list, i) {
+		const child_ctx = Object.create(ctx);
+		child_ctx.event = list[i];
+		return child_ctx;
+	}
+
 	function create_main_fragment$3(component, ctx) {
 		var div, current;
+
+		var each_value = ctx.events;
+
+		var each_blocks = [];
+
+		for (var i = 0; i < each_value.length; i += 1) {
+			each_blocks[i] = create_each_block$1(component, get_each_context$1(ctx, each_value, i));
+		}
 
 		return {
 			c: function create() {
 				div = createElement("div");
+
+				for (var i = 0; i < each_blocks.length; i += 1) {
+					each_blocks[i].c();
+				}
 				div.id = "calendar";
+				div.className = "svelte-bnngkq";
 				addLoc(div, file$3, 0, 0, 0);
 			},
 
 			m: function mount(target, anchor) {
 				insert(target, div, anchor);
+
+				for (var i = 0; i < each_blocks.length; i += 1) {
+					each_blocks[i].m(div, null);
+				}
+
 				current = true;
 			},
 
-			p: noop,
+			p: function update(changed, ctx) {
+				if (changed.events) {
+					each_value = ctx.events;
+
+					for (var i = 0; i < each_value.length; i += 1) {
+						const child_ctx = get_each_context$1(ctx, each_value, i);
+
+						if (each_blocks[i]) {
+							each_blocks[i].p(changed, child_ctx);
+						} else {
+							each_blocks[i] = create_each_block$1(component, child_ctx);
+							each_blocks[i].c();
+							each_blocks[i].m(div, null);
+						}
+					}
+
+					for (; i < each_blocks.length; i += 1) {
+						each_blocks[i].d(1);
+					}
+					each_blocks.length = each_value.length;
+				}
+			},
 
 			i: function intro(target, anchor) {
 				if (current) return;
@@ -1022,6 +1164,48 @@ var app = (function () {
 				if (detach) {
 					detachNode(div);
 				}
+
+				destroyEach(each_blocks, detach);
+			}
+		};
+	}
+
+	// (2:1) {#each events as event}
+	function create_each_block$1(component, ctx) {
+		var p, text0, text1_value = ctx.event.name, text1, text2, text3_value = ctx.event.start, text3;
+
+		return {
+			c: function create() {
+				p = createElement("p");
+				text0 = createText("ToDo: ");
+				text1 = createText(text1_value);
+				text2 = createText(" on ");
+				text3 = createText(text3_value);
+				addLoc(p, file$3, 2, 2, 47);
+			},
+
+			m: function mount(target, anchor) {
+				insert(target, p, anchor);
+				append(p, text0);
+				append(p, text1);
+				append(p, text2);
+				append(p, text3);
+			},
+
+			p: function update(changed, ctx) {
+				if ((changed.events) && text1_value !== (text1_value = ctx.event.name)) {
+					setData(text1, text1_value);
+				}
+
+				if ((changed.events) && text3_value !== (text3_value = ctx.event.start)) {
+					setData(text3, text3_value);
+				}
+			},
+
+			d: function destroy$$1(detach) {
+				if (detach) {
+					detachNode(p);
+				}
 			}
 		};
 	}
@@ -1034,6 +1218,7 @@ var app = (function () {
 
 		init(this, options);
 		this._state = assign({}, options.data);
+		if (!('events' in this._state)) console.warn("<Calendar> was created without expected data property 'events'");
 		this._intro = !!options.intro;
 
 		this._fragment = create_main_fragment$3(this, this._state);
@@ -1063,6 +1248,7 @@ var app = (function () {
 	    addEvent() {
 	        let { events } = this.get();
 	        let newEvent = {
+	            id: Date.now(),
 	            name: '',
 	            color: randomColor(),
 	            start: date2html(new Date()),
@@ -1074,7 +1260,8 @@ var app = (function () {
 	        this.set({ events });
 	    },
 	    updateEvent(event) {
-
+	        let { events } = this.get();
+	        this.set({ events });
 	    },
 	    deleteEvent(event) {
 	        let { events } = this.get();
@@ -1105,9 +1292,11 @@ var app = (function () {
 			component.deleteEvent(event);
 		});
 
+		var calendar_initial_data = { events: ctx.events };
 		var calendar = new Calendar({
 			root: component.root,
-			store: component.store
+			store: component.store,
+			data: calendar_initial_data
 		});
 
 		return {
@@ -1133,6 +1322,10 @@ var app = (function () {
 				var events_changes = {};
 				if (changed.events) events_changes.events = ctx.events;
 				events._set(events_changes);
+
+				var calendar_changes = {};
+				if (changed.events) calendar_changes.events = ctx.events;
+				calendar._set(calendar_changes);
 			},
 
 			i: function intro(target, anchor) {

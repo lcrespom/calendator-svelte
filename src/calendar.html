@@ -1,2 +1,13 @@
 <div id="calendar">
+	{#each events as event}
+		<p>ToDo: {event.name} on {event.start}</p>
+	{/each}
 </div>
+
+<style>
+	#calendar {
+		position: absolute;
+		left: 17rem;
+		width: calc(100% - 18rem);
+	}
+</style>
