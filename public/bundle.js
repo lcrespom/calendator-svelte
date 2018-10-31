@@ -426,7 +426,11 @@ var app = (function () {
 
 	var methods = {
 		changed(evt) {
-			this.set({ value: evt.target.value });
+			let { type } = this.get();
+			let value = evt.target.value;
+			if (type == 'number' && value)
+				value = parseInt(value);
+			this.set({ value });
 		}
 	};
 
